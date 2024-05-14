@@ -79,9 +79,14 @@ namespace Lucene.Net.Analysis.Ja.Util
                 {
                     string[] entry = CSVUtil.Parse(line);
 
-                    if (entry.Length < 13)
+                    if (this.format == DictionaryBuilder.DictionaryFormat.IPADIC && entry.Length < 13)
                     {
-                        Console.WriteLine("Entry in CSV is not valid: " + line);
+                        Console.WriteLine("IPADic entry in CSV is not valid (13 field values expected): " + line);
+                        continue;
+                    }
+                    else if (this.format == DictionaryBuilder.DictionaryFormat.UNIDIC && entry.Length < 33)
+                    {
+                        Console.WriteLine("UniDic entry in CSV is not valid (23 field values expected): " + line);
                         continue;
                     }
 
@@ -109,6 +114,8 @@ namespace Lucene.Net.Analysis.Ja.Util
                 }
             }
 
+            Console.WriteLine($"  {lines.Count} lines and normalized lines parsed.");
+
             Console.WriteLine("  sort...");
 
             // sort by term: we sorted the files already and use a stable sort.
@@ -117,7 +124,12 @@ namespace Lucene.Net.Analysis.Ja.Util
             Console.WriteLine("  encode...");
 
             PositiveInt32Outputs fstOutput = PositiveInt32Outputs.Singleton;
-            Builder<Int64> fstBuilder = new Builder<Int64>(FST.INPUT_TYPE.BYTE2, 0, 0, true, true, int.MaxValue, fstOutput, null, true, PackedInt32s.DEFAULT, true, 15);
+            Builder<Int64> fstBuilder = new Builder<Int64>(
+                FST.INPUT_TYPE.BYTE2,
+                0, 0, true, true,
+                int.MaxValue,
+                fstOutput, null, true, PackedInt32s.DEFAULT,
+                true, 15);
             Int32sRef scratch = new Int32sRef();
             long ord = -1; // first ord will be 0
             string lastValue = null;
@@ -159,10 +171,10 @@ namespace Lucene.Net.Analysis.Ja.Util
 
             return dictionary;
         }
-        
+
         /// <summary>
         /// IPADIC features
-        /// 
+        ///
         /// 0   - surface
         /// 1   - left cost
         /// 2   - right cost
@@ -171,18 +183,19 @@ namespace Lucene.Net.Analysis.Ja.Util
         /// 10  - base form
         /// 11  - reading
         /// 12  - pronounciation
-        /// 
-        /// UniDic features
-        /// 
+        ///
+        /// UniDic features - Ver.cwj-202302_full
+        ///
         /// 0   - surface
         /// 1   - left cost
         /// 2   - right cost
         /// 3   - word cost
         /// 4-9 - pos
-        /// 10  - base form reading
-        /// 11  - base form
-        /// 12  - surface form
-        /// 13  - surface reading
+        /// 10  - base form reading => 11
+        /// 11  - base form => 10
+        /// 12  - surface form => not used
+        /// 13  - pronounciation => 12
+        /// 14~ - additional features
         /// </summary>
         public virtual string[] FormatEntry(string[] features)
         {
@@ -203,20 +216,14 @@ namespace Lucene.Net.Analysis.Ja.Util
                 features2[7] = features[7];
                 features2[8] = features[8];
                 features2[9] = features[9];
-                features2[10] = features[11];
+                // NOTE: If the feature is empty, we use "*" as a placeholder
+                // UniDic base form
+                features2[10] = features[11].Length == 0 ? "*" : features[11];
+                // UniDic base form reading
+                features2[11] = features[10].Length == 0 ? "*" : features[10];
+                // UniDic pronounciation
+                features2[12] = features[13].Length == 0 ? "*" : features[13];
 
-                // If the surface reading is non-existent, use surface form for reading and pronunciation.
-                // This happens with punctuation in UniDic and there are possibly other cases as well
-                if (features[13].Length == 0)
-                {
-                    features2[11] = features[0];
-                    features2[12] = features[0];
-                }
-                else
-                {
-                    features2[11] = features[13];
-                    features2[12] = features[13];
-                }
                 return features2;
             }
         }

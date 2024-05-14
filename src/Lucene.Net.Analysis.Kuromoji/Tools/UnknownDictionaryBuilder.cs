@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using static Lucene.Net.Analysis.Ja.Util.DictionaryBuilder;
 using JCG = J2N.Collections.Generic;
 
 namespace Lucene.Net.Analysis.Ja.Util
@@ -32,10 +33,12 @@ namespace Lucene.Net.Analysis.Ja.Util
         private const string NGRAM_DICTIONARY_ENTRY = "NGRAM,5,5,-32768,記号,一般,*,*,*,*,*,*,*";
 
         private readonly string encoding = "euc-jp";
+        private readonly DictionaryFormat format = DictionaryFormat.IPADIC;
 
-        public UnknownDictionaryBuilder(string encoding)
+        public UnknownDictionaryBuilder(DictionaryFormat format, string encoding)
         {
             this.encoding = encoding;
+            this.format = format;
         }
 
         public virtual UnknownDictionaryWriter Build(string dirname)
@@ -59,16 +62,23 @@ namespace Lucene.Net.Analysis.Ja.Util
             using (Stream inputStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             using (TextReader reader = new StreamReader(inputStream, decoder))
             {
-
                 dictionary.Put(CSVUtil.Parse(NGRAM_DICTIONARY_ENTRY));
-
 
                 string line = null;
                 while ((line = reader.ReadLine()) != null)
                 {
                     // note: unk.def only has 10 fields, it simplifies the writer to just append empty reading and pronunciation,
                     // even though the unknown dictionary returns hardcoded null here.
-                    string[] parsed = CSVUtil.Parse(line + ",*,*"); // Probably we don't need to validate entry
+                    string[] parsed;
+                    if (this.format == DictionaryFormat.UNIDIC)
+                    {
+                        parsed = CSVUtil.Parse(line + ",*,*,*"); // UniDic needs one more column
+                    }
+                    else
+                    {
+                        parsed = CSVUtil.Parse(line + ",*,*"); // Probably we don't need to validate entry
+                    }
+
                     lines.Add(parsed);
                 }
             }

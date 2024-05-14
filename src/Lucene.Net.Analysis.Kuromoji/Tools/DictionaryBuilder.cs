@@ -22,7 +22,8 @@ namespace Lucene.Net.Analysis.Ja.Util
 
     public static class DictionaryBuilder // LUCENENET specific: CA1052 Static holder types should be Static or NotInheritable
     {
-        public enum DictionaryFormat { IPADIC, UNIDIC };
+        public enum DictionaryFormat
+        { IPADIC, UNIDIC };
 
         static DictionaryBuilder()
         {
@@ -48,7 +49,7 @@ namespace Lucene.Net.Analysis.Ja.Util
             Console.WriteLine("done");
 
             Console.WriteLine("building unknown word dict...");
-            UnknownDictionaryBuilder unkBuilder = new UnknownDictionaryBuilder(encoding);
+            UnknownDictionaryBuilder unkBuilder = new UnknownDictionaryBuilder(format, encoding);
             UnknownDictionaryWriter unkDictionary = unkBuilder.Build(inputDirname);
             unkDictionary.Write(outputDirname);
             //unkDictionary = null; // LUCENENET: IDE0059: Remove unnecessary value assignment
