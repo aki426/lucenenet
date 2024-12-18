@@ -54,7 +54,8 @@ namespace Lucene.Net.Analysis.Ja.Util
         {
             short leftId = short.Parse(entry[1], CultureInfo.InvariantCulture);
             short rightId = short.Parse(entry[2], CultureInfo.InvariantCulture);
-            short wordCost = short.Parse(entry[3], CultureInfo.InvariantCulture);
+            // in UniDic Dictionary, cost is positive or negative.
+            int wordCost = int.Parse(entry[3], CultureInfo.InvariantCulture);
 
             StringBuilder sb = new StringBuilder();
 
@@ -124,7 +125,7 @@ namespace Lucene.Net.Analysis.Ja.Util
                 Debugging.Assert(leftId == rightId);
                 Debugging.Assert(leftId < 4096); // there are still unused bits
             }
-                                         // add pos mapping
+            // add pos mapping
             int toFill = 1 + leftId - posDict.Count;
             for (int i = 0; i < toFill; i++)
             {
@@ -136,7 +137,7 @@ namespace Lucene.Net.Analysis.Ja.Util
             posDict[leftId] = fullPOSData;
 
             m_buffer.PutInt16((short)(leftId << 3 | flags));
-            m_buffer.PutInt16(wordCost);
+            m_buffer.PutInt32(wordCost);
 
             if ((flags & BinaryDictionary.HAS_BASEFORM) != 0)
             {
@@ -241,11 +242,11 @@ namespace Lucene.Net.Analysis.Ja.Util
 
         public virtual void AddMapping(int sourceId, int wordId)
         {
-            if (Debugging.AssertsEnabled) Debugging.Assert(wordId > lastWordId,"words out of order: {0} vs lastID: {1}", wordId, lastWordId);
+            if (Debugging.AssertsEnabled) Debugging.Assert(wordId > lastWordId, "words out of order: {0} vs lastID: {1}", wordId, lastWordId);
 
             if (sourceId > lastSourceId)
             {
-                if (Debugging.AssertsEnabled) Debugging.Assert(sourceId > lastSourceId,"source ids out of order: lastSourceId={0} vs sourceId={1}", lastSourceId, sourceId);
+                if (Debugging.AssertsEnabled) Debugging.Assert(sourceId > lastSourceId, "source ids out of order: lastSourceId={0} vs sourceId={1}", lastSourceId, sourceId);
                 targetMapOffsets = ArrayUtil.Grow(targetMapOffsets, sourceId + 1);
                 for (int i = lastSourceId + 1; i <= sourceId; i++)
                 {

@@ -56,6 +56,7 @@ namespace Lucene.Net.Analysis.Ja.Dict
 
         // LUCENENET specific - variable to hold the name of the data directory (or empty string to load embedded resources)
         private static readonly string DATA_DIR = LoadDataDir();
+
         // LUCENENET specific - name of the subdirectory inside of the directory where the Kuromoji dictionary files reside.
         private const string DATA_SUBDIR = "kuromoji-data";
 
@@ -228,7 +229,8 @@ namespace Lucene.Net.Analysis.Ja.Dict
 
         public virtual int GetWordCost(int wordId)
         {
-            return buffer.GetInt16(wordId + 2);  // Skip id
+            // LeftId : Int16 = 2 bytes
+            return buffer.GetInt32(wordId + 2);  // Skip id
         }
 
         public virtual string GetBaseForm(int wordId, char[] surfaceForm, int off, int len)
@@ -312,7 +314,8 @@ namespace Lucene.Net.Analysis.Ja.Dict
 
         private static int BaseFormOffset(int wordId)
         {
-            return wordId + 4;
+            // LeftId : Int16, WordCost : Int32 = 6 bytes
+            return wordId + 6;
         }
 
         private int ReadingOffset(int wordId)
@@ -389,8 +392,10 @@ namespace Lucene.Net.Analysis.Ja.Dict
 
         /// <summary>flag that the entry has baseform data. otherwise its not inflected (same as surface form)</summary>
         public static readonly int HAS_BASEFORM = 1;
+
         /// <summary>flag that the entry has reading data. otherwise reading is surface form converted to katakana</summary>
         public static readonly int HAS_READING = 2;
+
         /// <summary>flag that the entry has pronunciation data. otherwise pronunciation is the reading</summary>
         public static readonly int HAS_PRONUNCIATION = 4;
     }
